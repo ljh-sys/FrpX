@@ -1,59 +1,34 @@
 # FrpX
 
-> 🚀 frp 轻量级桌面客户端 — 单文件即用，告别命令行
+> 🚀 frp 轻量级桌面客户端 ，告别命令行
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
-[![Release](https://img.shields.io/github/v/release/yourname/FrpX?style=flat-square)](https://github.com/yourname/FrpX/releases)
-
-[English](#english) | 简体中文
+[![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 
 ---
 
 ## ✨ 特性
 
-<table>
-<tr>
-<td width="50%">
-
-### 🎯 核心功能
-- 一键启动/停止 frpc 内网穿透
-- 内置 TOML 编辑器，语法高亮 + 格式校验
-- 自动获取 GitHub 最新 frpc 版本
-- 实时日志查看，支持着色显示
-
-</td>
-<td width="50%">
-
-### 🛠️ 高级特性
-- 系统代理自动检测
-- 开机自启（注册表）
-- 系统托盘模式
-- 窗口最小尺寸锁定
-
-</td>
-</tr>
-</table>
+- 🎯 **一键启停** — 启动/停止 frpc 内网穿透
+- 📝 **配置编辑** — 内置 TOML 编辑器，语法高亮 + 格式校验
+- 🔄 **版本管理** — 自动获取 GitHub 最新 frpc 版本，一键下载
+- 📊 **实时日志** — 查看 frpc 运行日志，支持着色显示
+- 🌐 **代理支持** — 自动检测系统代理，国内外通用
+- 🔧 **开机自启** — 支持 Windows 注册表自启动
 
 ---
 
 ## 📦 安装
 
-### 方式一：直接下载（推荐）
+### 下载
 
-1. 前往 [Releases](https://github.com/yourname/FrpX/releases) 下载最新版
-2. 解压到任意目录
-3. 双击 `FrpX.exe` 启动
+前往 [Releases](https://github.com/yourname/FrpX/releases) 下载最新版，解压后双击 `FrpX.exe` 启动。
 
-### 方式二：从源码编译
+### 从源码编译
 
 ```bash
-# 克隆仓库
-git clone https://github.com/yourname/FrpX.git
-cd FrpX
-
-# 编译（需要 Go 1.21+ 和 GCC）
+git clone https://github.com/yourname/FrpX.git && cd FrpX
 export CGO_ENABLED=1
 go build -ldflags "-s -w -H windowsgui" -o FrpX.exe .
 ```
@@ -62,12 +37,10 @@ go build -ldflags "-s -w -H windowsgui" -o FrpX.exe .
 
 ## 🚀 快速开始
 
-```
-1. 双击 FrpX.exe 启动应用
-2. 点击「版本」→ 下载最新版 frpc
-3. 点击「配置」→ 填写你的 frp 服务器信息
-4. 点击「主页」→ 启动 frpc
-```
+1. 双击 `FrpX.exe` 启动
+2. 进入「版本」页面，下载最新版 frpc
+3. 进入「配置」页面，填写 frp 服务器信息
+4. 返回「主页」，点击启动按钮
 
 ---
 
@@ -80,186 +53,104 @@ go build -ldflags "-s -w -H windowsgui" -o FrpX.exe .
 <td align="center"><b>版本管理</b></td>
 </tr>
 <tr>
-<td><img src="docs/home.png" width="280"></td>
-<td><img src="docs/config.png" width="280"></td>
-<td><img src="docs/versions.png" width="280"></td>
+<td><img src="docs/主页.png" width="280"></td>
+<td><img src="docs/配置.png" width="280"></td>
+<td><img src="docs/版本.png" width="280"></td>
 </tr>
 <tr>
 <td align="center"><b>日志查看</b></td>
 <td align="center"><b>设置</b></td>
-<td align="center"><b>系统托盘</b></td>
+<td></td>
 </tr>
 <tr>
-<td><img src="docs/logs.png" width="280"></td>
-<td><img src="docs/settings.png" width="280"></td>
-<td><img src="docs/tray.png" width="280"></td>
+<td><img src="docs/日志.png" width="280"></td>
+<td><img src="docs/设置.png" width="280"></td>
+<td></td>
 </tr>
 </table>
 
 ---
 
-## ⚙️ 配置说明
+## ⚙️ 配置
 
-FrpX 使用标准的 frpc.toml 配置文件：
+FrpX 使用标准的 frpc.toml 配置文件。内置编辑器支持语法高亮和格式校验。
 
-```toml
-serverAddr = "your-server.com"
-serverPort = 7000
+**配置校验：**
 
-auth.method = "token"
-auth.token = "your-token"
-
-[[proxies]]
-name = "my_service"
-type = "tcp"
-localIp = "localhost"
-localPort = 25565
-remotePort = 1000
-```
-
-### 配置校验
-
-编辑器内置 TOML 格式校验：
-- ✅ 保存时自动校验
-- ✅ 实时错误提示（行号 + 错误描述）
-- ✅ 支持嵌套键名（如 `auth.method`）
+- 保存时自动校验格式
+- 错误提示包含行号（如 `7:缺少]]`）
+- 支持嵌套键名（如 `auth.method`）
 
 ---
 
 ## 🏗️ 架构
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      FrpX.exe                           │
-├─────────────────────────────────────────────────────────┤
-│  ┌─────────────────────┐  ┌──────────────────────────┐ │
-│  │    Go Backend       │  │      WebView2 UI         │ │
-│  │                     │  │                          │ │
-│  │  • HTTP API Server  │←→│  • 主页（启停控制）      │ │
-│  │  • 进程管理         │  │  • 配置（CodeMirror）    │ │
-│  │  • GitHub 客户端    │  │  • 版本（下载管理）      │ │
-│  │  • 代理检测         │  │  • 日志（实时查看）      │ │
-│  │                     │  │  • 设置（自启/托盘）     │ │
-│  └─────────────────────┘  └──────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-                  ┌─────────────┐
-                  │  frpc.exe   │
-                  │  (子进程)   │
-                  └─────────────┘
-```
+**FrpX = Go 后端 + WebView2 前端 + frpc 子进程**
+
+| 组件              | 职责                            |
+| --------------- | ----------------------------- |
+| **Go Backend**  | HTTP API、进程管理、GitHub 客户端、代理检测 |
+| **WebView2 UI** | 主页、配置编辑器、版本管理、日志、设置           |
+| **frpc.exe**    | 内网穿透服务（子进程，自动管理）              |
 
 ### API 端点
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/status` | GET | 获取 frpc 运行状态 |
-| `/api/start` | POST | 启动 frpc（自动清理旧进程） |
-| `/api/stop` | POST | 停止 frpc（强制终止） |
-| `/api/config` | GET/POST | 读写 frpc.toml |
-| `/api/versions` | GET | 从 GitHub 获取版本列表 |
-| `/api/download` | POST | 下载指定版本 frpc |
-| `/api/logs` | GET | 获取 frpc 运行日志 |
+| 端点                    | 方法         | 说明               |
+| --------------------- | ---------- | ---------------- |
+| `/api/status`         | GET        | 获取 frpc 运行状态     |
+| `/api/start`          | POST       | 启动 frpc（自动清理旧进程） |
+| `/api/stop`           | POST       | 停止 frpc（强制终止）    |
+| `/api/config`         | GET/POST   | 读写 frpc.toml     |
+| `/api/versions`       | GET        | 从 GitHub 获取版本列表  |
+| `/api/download`       | POST       | 下载指定版本 frpc      |
+| `/api/uninstall`      | POST       | 删除 frpc.exe      |
+| `/api/has_frpc`       | GET        | 检查 frpc.exe 是否存在 |
+| `/api/logs`           | GET/DELETE | 获取/清空 frpc 运行日志  |
+| `/api/settings`       | GET/POST   | 应用设置             |
+| `/api/apply_settings` | POST       | 应用设置（注册表）        |
 
 ---
 
 ## 🔧 开发
 
-### 环境要求
-
-- **Go** 1.21 或更高版本
-- **GCC** (MSYS2 mingw64)
-- **WebView2 Runtime** (Windows 10/11 自带)
-
-### 编译
+**环境要求：** Go 1.21+、GCC (MSYS2)、WebView2 Runtime
 
 ```bash
-# 设置环境
-export PATH="$HOME/sdk/go/bin:$HOME/go/bin:/c/msys64/mingw64/bin:$PATH"
-export CGO_ENABLED=1
-
 # 编译
+export CGO_ENABLED=1
 go build -ldflags "-s -w -H windowsgui" -o FrpX.exe .
 
 # 或使用 build.bat（Windows）
 .\build.bat
 ```
 
-### 项目结构
-
-```
-FrpX/
-├── main.go              # 入口 + HTTP API + WebView
-├── frpc.go              # frpc 进程管理
-├── update.go            # GitHub API + 下载
-├── winicon.go           # 窗口图标 (CGO)
-├── frontend/            # 嵌入式前端
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
-└── build.bat            # 一键编译
-```
+详见 [CLAUDE.md](CLAUDE.md) 了解项目架构。
 
 ---
 
 ## 🐛 常见问题
 
-<details>
-<summary><b>Q: frpc.exe 被杀毒软件拦截怎么办？</b></summary>
-
-将 `frpc.exe` 添加到 Windows Defender 排除项：
-
-1. 打开 Windows 安全中心
-2. 病毒和威胁防护 → 管理设置
-3. 排除项 → 添加文件 → 选择 `frpc.exe`
-
-</details>
-
-<details>
-<summary><b>Q: 启动时弹出黑色命令行窗口？</b></summary>
-
-所有系统命令已设置 `HideWindow: true`。如仍出现，请检查是否使用了最新版本。
-
-</details>
-
-<details>
-<summary><b>Q: 无法连接 GitHub 下载 frpc？</b></summary>
-
-FrpX 自动检测系统代理。如需手动配置：
-
-```powershell
-$env:HTTP_PROXY="http://127.0.0.1:7890"
-$env:HTTPS_PROXY="http://127.0.0.1:7890"
-```
-
-</details>
+| 问题               | 解决方案                                  |
+| ---------------- | ------------------------------------- |
+| frpc.exe 被杀毒软件拦截 | 将 `frpc.exe` 添加到 Windows Defender 排除项 |
+| 无法连接 GitHub      | FrpX 自动检测系统代理，或设置 `HTTP_PROXY` 环境变量   |
+| 版本获取失败           | 检查网络连接，确认代理设置正确                       |
 
 ---
 
 ## 🤝 贡献
 
-欢迎提交 Issue 和 Pull Request！
-
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
-
----
+欢迎提交 Issue 和 Pull Request！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
----
+[MIT License](LICENSE)
 
 ## 🙏 致谢
 
-- [frp](https://github.com/fatedier/frp) - 高性能反向代理应用
-- [webview](https://github.com/webview/webview) - 跨平台 WebView 库
-- [CodeMirror](https://codemirror.net/) - 代码编辑器
+- [frp](https://github.com/fatedier/frp) — 高性能反向代理
+- [webview](https://github.com/webview/webview) — 跨平台 WebView
+- [CodeMirror](https://codemirror.net/) — 代码编辑器
 
 ---
 
