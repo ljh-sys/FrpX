@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrpX</title>
+    <link rel="icon" href="/icon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Top App Bar -->
+        <header id="topbar">
+            <div class="topbar-left">
+                <span class="logo-text">Frp<span class="logo-accent">X</span></span>
+            </div>
+            <nav class="topbar-nav">
+                <div class="nav-item active" data-page="home">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor"/></svg>
+                    <span>主页</span>
+                </div>
+                <div class="nav-item" data-page="config">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" fill="currentColor"/></svg>
+                    <span>配置</span>
+                </div>
+                <div class="nav-item" data-page="versions">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z" fill="currentColor"/></svg>
+                    <span>版本</span>
+                </div>
+                <div class="nav-item" data-page="logs">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" fill="currentColor"/></svg>
+                    <span>日志</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg>
+                    <span>设置</span>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Content Area -->
+        <main id="content">
+            <!-- Page: Home -->
+            <div id="page-home" class="page active">
+                <div class="home-center">
+                    <button id="btnToggle" class="fab" onclick="toggleFrpc()">
+                        <svg id="fabPlay" viewBox="0 0 24 24" width="36" height="36"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                        <svg id="fabStop" viewBox="0 0 24 24" width="36" height="36" style="display:none"><path d="M6 6h12v12H6z" fill="currentColor"/></svg>
+                        <svg id="fabDownload" viewBox="0 0 24 24" width="32" height="32" style="display:none"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/></svg>
+                    </button>
+                    <div class="home-hint" id="homeHint">点击按钮启动 frpc</div>
+                </div>
+            </div>
+
+            <!-- Page: Config -->
+            <div id="page-config" class="page">
+                <div class="content-scroll">
+                    <div class="page-title-row">
+                        <h2 class="page-title">frpc.toml</h2>
+                        <div class="page-actions">
+                            <button class="btn-text" onclick="reloadConfig()">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg>
+                                重新加载
+                            </button>
+                            <button class="btn-filled" onclick="saveConfig()">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/></svg>
+                                保存
+                            </button>
+                        </div>
+                    </div>
+                    <div class="editor-wrapper">
+                        <textarea id="tomlEditor"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Versions -->
+            <div id="page-versions" class="page">
+                <div class="content-scroll">
+                    <div class="page-title-row">
+                        <h2 class="page-title">frpc 版本</h2>
+                        <div class="page-actions">
+                            <button class="btn-text" onclick="loadVersions()">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg>
+                                刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="version-cards" id="versionList">
+                        <div class="loading">加载中…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Logs -->
+            <div id="page-logs" class="page">
+                <div class="log-page">
+                    <div class="page-title-row">
+                        <h2 class="page-title">运行日志</h2>
+                        <div class="page-actions">
+                            <button class="btn-text" onclick="clearLogs()">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
+                                清空
+                            </button>
+                        </div>
+                    </div>
+                    <div class="log-terminal" id="logTerminal"></div>
+                </div>
+            </div>
+
+            <!-- Page: Settings -->
+            <div id="page-settings" class="page">
+                <div class="content-scroll">
+                    <div class="page-title-row">
+                        <h2 class="page-title">设置</h2>
+                    </div>
+                    <div class="settings-list">
+                        <div class="setting-row">
+                            <div class="setting-text">
+                                <div class="setting-label">关闭窗口行为</div>
+                                <div class="setting-sublabel">关闭窗口时执行的操作</div>
+                            </div>
+                            <div class="dropdown" id="dropdownCloseBehavior">
+                                <button class="dropdown-btn" onclick="toggleDropdown('dropdownCloseBehavior')">
+                                    <span id="dropdownCloseLabel">直接退出</span>
+                                    <svg class="dropdown-arrow" viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-item active" data-value="exit" onclick="selectDropdown('dropdownCloseBehavior', 'exit', '直接退出', this)">直接退出</div>
+                                    <div class="dropdown-item" data-value="tray" onclick="selectDropdown('dropdownCloseBehavior', 'tray', '最小化到托盘', this)">最小化到托盘</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-text">
+                                <div class="setting-label">开机自启</div>
+                                <div class="setting-sublabel">系统启动时自动运行 FrpX</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="settingAutoStart" onchange="saveSetting('autostart', this.checked)">
+                                <span class="switch-track"></span>
+                            </label>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-text">
+                                <div class="setting-label">自动启动 frpc</div>
+                                <div class="setting-sublabel">启动 FrpX 时自动启动 frpc</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="settingAutoStartFrpc" onchange="saveSetting('auto_start_frpc', this.checked)">
+                                <span class="switch-track"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="about-section">
+                        <div class="about-brand">
+                            <span class="about-logo">Frp<span class="logo-accent">X</span></span>
+                            <span class="about-version" id="frpxVersion">v1.0.0</span>
+                        </div>
+                        <span class="about-desc">frp 轻量级桌面客户端</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/toml/toml.min.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
