@@ -10,27 +10,21 @@ echo.
 taskkill /F /IM FrpX.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-echo   [1/4] Clean old build ...
-if exist FrpX.exe (
-    del /F /Q FrpX.exe
-    echo         - Deleted FrpX.exe
-) else (
-    echo         - No old build found
-)
-
 set PATH=%USERPROFILE%\sdk\go\bin;%USERPROFILE%\go\bin;C:\msys64\mingw64\bin;%PATH%
 set CGO_ENABLED=1
 
-echo.
-echo   [2/4] Tidy modules ...
+echo   [1/3] Tidy modules ...
 cd /d "%~dp0"
-go mod tidy
-if errorlevel 1 (
-    echo         - Module tidy failed, continuing...
-)
+go mod tidy >nul 2>&1
+echo         - Done
 
 echo.
-echo   [3/4] Building FrpX.exe ...
+echo   [2/3] Building FrpX.exe ...
+if not exist "build\windows" mkdir "build\windows"
+if exist "%~dp0assets\icon.ico" (
+    copy /Y "%~dp0assets\icon.ico" "build\windows\icon.ico" >nul
+)
+
 wails build -ldflags "-s -w -H windowsgui"
 if errorlevel 1 (
     echo.
@@ -40,20 +34,13 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
-rem Copy from wails output dir to project root
-if exist "build\bin\FrpX.exe" (
-    copy /Y "build\bin\FrpX.exe" FrpX.exe >nul
-    echo         - Copied to project root
-)
-
 echo         - Build OK
 
 echo.
-echo   [4/4] Result
+echo   [3/3] Result
 echo   -------------------------------
-for %%A in (FrpX.exe) do (
-    echo     Path: %~dp0FrpX.exe
+for %%A in ("build\bin\FrpX.exe") do (
+    echo     Path: %~dp0build\bin\FrpX.exe
     echo     Size: %%~zA bytes
 )
 echo   -------------------------------
