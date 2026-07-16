@@ -16,7 +16,7 @@ import (
 type Frpc struct {
 	mu      sync.Mutex
 	cmd     *exec.Cmd
-	exeDir  string
+	dataDir string
 	running bool
 	logs    []logEntry
 	logMu   sync.RWMutex
@@ -33,8 +33,8 @@ var (
 	logTimeFmt  = "15:04:05"
 )
 
-func NewFrpc(exeDir string) *Frpc {
-	return &Frpc{exeDir: exeDir}
+func NewFrpc(dataDir string) *Frpc {
+	return &Frpc{dataDir: dataDir}
 }
 
 // killAllFrpc force-kills all frpc.exe processes on the system.
@@ -54,15 +54,15 @@ func (f *Frpc) Start() error {
 	f.running = false
 	f.cmd = nil
 
-	frpcPath := filepath.Join(f.exeDir, "frpc.exe")
-	cfgPath := filepath.Join(f.exeDir, "frpc.toml")
+	frpcPath := filepath.Join(f.dataDir, "frpc.exe")
+	cfgPath := filepath.Join(f.dataDir, "frpc.toml")
 
 	if _, err := os.Stat(frpcPath); os.IsNotExist(err) {
 		return fmt.Errorf("frpc.exe not found")
 	}
 
 	f.cmd = exec.Command(frpcPath, "-c", cfgPath)
-	f.cmd.Dir = f.exeDir
+	f.cmd.Dir = f.dataDir
 	f.cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	stdout, _ := f.cmd.StdoutPipe()

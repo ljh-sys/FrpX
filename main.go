@@ -42,6 +42,7 @@ type Settings struct {
 
 var (
 	exeDir     string
+	dataDir    string // data/ 子目录，存放运行时文件
 	settings   Settings
 	settingsMu sync.RWMutex
 	frpc       *Frpc
@@ -70,7 +71,7 @@ func loadSettings() {
 		CloseBehavior: "exit",
 	}
 
-	data, err := os.ReadFile(filepath.Join(exeDir, settingsFile))
+	data, err := os.ReadFile(filepath.Join(dataDir, settingsFile))
 	if err != nil {
 		return
 	}
@@ -82,11 +83,11 @@ func saveSettingsFile() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(exeDir, settingsFile), data, 0644)
+	return os.WriteFile(filepath.Join(dataDir, settingsFile), data, 0644)
 }
 
 func ensureDefaults() {
-	cfgPath := filepath.Join(exeDir, "frpc.toml")
+	cfgPath := filepath.Join(dataDir, "frpc.toml")
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
 		os.WriteFile(cfgPath, []byte(defaultConfig), 0644)
 	}
@@ -101,10 +102,12 @@ func main() {
 		log.Fatal(err)
 	}
 	exeDir = filepath.Dir(exePath)
+	dataDir = filepath.Join(exeDir, "data")
+	os.MkdirAll(dataDir, 0755)
 
 	loadSettings()
 	ensureDefaults()
-	frpc = NewFrpc(exeDir)
+	frpc = NewFrpc(dataDir)
 
 	// Auto-start frpc if configured
 	if settings.AutoStartFrpc {
@@ -147,7 +150,7 @@ func main() {
 			w.SetSize(720, 580, webview.HintMin)
 			w.Navigate(url)	
 			w.Dispatch(func() {
-				applyWindowIcon(w, exeDir, frontendFS)
+				applyWindowIcon(w, dataDir, frontendFS)
 			})
 			w.Run()
 		}()
@@ -160,7 +163,7 @@ func main() {
 		w.SetSize(720, 580, webview.HintMin)
 		w.Navigate(url)
 		w.Dispatch(func() {
-			applyWindowIcon(w, exeDir, frontendFS)
+			applyWindowIcon(w, dataDir, frontendFS)
 		})
 		w.Run()
 	}
@@ -175,9 +178,9 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if running {
-		resp["frpc_version"] = GetLocalVersion(exeDir)
+		resp["frpc_version"] = GetLocalVersion(dataDir)
 
-		cfgPath := filepath.Join(exeDir, "frpc.toml")
+		cfgPath := filepath.Join(dataDir, "frpc.toml")
 		data, _ := os.ReadFile(cfgPath)
 		content := string(data)
 		server := extractTOMLValue(content, "serverAddr")
@@ -219,7 +222,7 @@ func handleStop(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleConfig(w http.ResponseWriter, r *http.Request) {
-	cfgPath := filepath.Join(exeDir, "frpc.toml")
+	cfgPath := filepath.Join(dataDir, "frpc.toml")
 
 	if r.Method == "GET" {
 		data, err := os.ReadFile(cfgPath)
@@ -259,7 +262,7 @@ func handleVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	current := GetLocalVersion(exeDir)
+	current := GetLocalVersion(dataDir)
 	var latest string
 	var versionItems []map[string]interface{}
 
@@ -301,7 +304,7 @@ func handleDownload(w http.ResponseWriter, r *http.Request) {
 
 	frpc.Stop()
 
-	if err := DownloadAndExtract(req.URL, req.Tag, exeDir); err != nil {
+	if err := DownloadAndExtract(req.URL, req.Tag, dataDir); err != nil {
 		writeJSON(w, map[string]interface{}{"ok": false, "error": err.Error()})
 		return
 	}
@@ -320,7 +323,7 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleHasFrpc(w http.ResponseWriter, r *http.Request) {
-	_, err := os.Stat(filepath.Join(exeDir, "frpc.exe"))
+	_, err := os.Stat(filepath.Join(dataDir, "frpc.exe"))
 	writeJSON(w, map[string]interface{}{
 		"exists": err == nil,
 	})
@@ -334,8 +337,8 @@ func handleUninstall(w http.ResponseWriter, r *http.Request) {
 
 	frpc.Stop()
 
-	frpcPath := filepath.Join(exeDir, "frpc.exe")
-	verPath := filepath.Join(exeDir, "frpc.version")
+	frpcPath := filepath.Join(dataDir, "frpc.exe")
+	verPath := filepath.Join(dataDir, "frpc.version")
 
 	os.Remove(frpcPath)
 	os.Remove(verPath)
