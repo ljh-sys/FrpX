@@ -24,23 +24,15 @@
 
 ### 下载
 
-前往 [Releases](https://github.com/yourname/FrpX/releases) 下载最新版，解压后双击 `FrpX.exe` 启动。
+前往 [Releases](https://gitee.com/liujiahong528/frpx/releases) 下载最新版，解压后双击 `FrpX.exe` 启动。
 
 ### 从源码编译
 
 ```bash
-git clone https://github.com/yourname/FrpX.git && cd FrpX
-
-# 安装 Wails CLI
+git clone https://gitee.com/liujiahong528/frpx.git && cd frpx
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-# 编译
 wails build -ldflags "-s -w -H windowsgui"
 ```
-
-Windows 用户可直接双击 `build.bat`。
-
-**环境要求：** Go 1.21+、GCC (MSYS2)、WebView2 Runtime
 
 ---
 
@@ -57,71 +49,27 @@ Windows 用户可直接双击 `build.bat`。
 
 <table>
 <tr>
-<td align="center"><b>主页</b></td>
-<td align="center"><b>配置编辑器</b></td>
-<td align="center"><b>版本管理</b></td>
-</tr>
-<tr>
 <td><img src="docs/主页.png" width="280"></td>
 <td><img src="docs/配置.png" width="280"></td>
 <td><img src="docs/版本.png" width="280"></td>
 </tr>
 <tr>
-<td align="center"><b>日志查看</b></td>
-<td align="center"><b>设置</b></td>
-<td></td>
-</tr>
-<tr>
 <td><img src="docs/日志.png" width="280"></td>
 <td><img src="docs/设置.png" width="280"></td>
-<td></td>
 </tr>
 </table>
 
 ---
 
-## ⚙️ 配置
-
-FrpX 使用标准的 frpc.toml 配置文件。内置编辑器支持语法高亮和格式校验。
-
-**配置校验：**
-
-- 保存时自动校验格式
-- 错误提示包含行号（如 `7:缺少]]`）
-- 支持嵌套键名（如 `auth.method`）
-
----
-
-## 🏗️ 架构
-
-**FrpX = Wails (Go + WebView2) + frpc 子进程**
-
-| 组件              | 职责                            |
-| --------------- | ----------------------------- |
-| **Go Backend**  | Wails 绑定、进程管理、GitHub 客户端、代理检测 |
-| **WebView2 UI** | 主页、配置编辑器、版本管理、日志、设置           |
-| **frpc.exe**    | 内网穿透服务（子进程，自动管理）              |
-
-前后端通过 Wails 绑定通信（`window.go.main.App.Method()`），无需 HTTP 服务器。
-
----
-
-## 🔧 开发
+## ⚙️ 开发
 
 ```bash
-# 开发模式（热重载）
-wails dev
-
-# 编译
-wails build -ldflags "-s -w -H windowsgui"
-
-# 或使用 build.bat（Windows）
-.\build.bat
+wails dev                    # 开发模式（热重载）
+wails build -ldflags "-s -w -H windowsgui"   # 生产编译
+wails build -platform windows/amd64           # 交叉编译
 ```
 
 详见 [CLAUDE.md](CLAUDE.md) 了解项目架构和 Wails 绑定 API。
-
----
 
 ## 🐛 常见问题
 
