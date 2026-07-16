@@ -1,0 +1,10 @@
+{
+  "name": "FrpX",
+  "outputfilename": "FrpX.exe",
+  "frontend:install": "",
+  "frontend:build": "",
+  "author": {
+    "name": "FrpX",
+    "email": ""
+  }
+}

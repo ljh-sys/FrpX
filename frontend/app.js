@@ -1,3 +1,7 @@
+// ── Wails Bridge ──
+// All Go methods exposed as: window.go.main.App.MethodName(args)
+// They return Promises resolving to the Go return value.
+
 // ── Navigation ──
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -9,7 +13,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
         document.getElementById('page-' + page).classList.add('active');
         if (page === 'config') initEditor();
         if (page === 'versions') {
-            // Only load if no data displayed yet
             const list = document.getElementById('versionList');
             if (!list.querySelector('.version-item')) {
                 loadVersions();
@@ -18,7 +21,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
         if (page === 'logs') startLogPoll();
         if (page === 'settings') loadSettings();
 
-        // Stop log poll when leaving logs page
         if (page !== 'logs') stopLogPoll();
     });
 });
@@ -29,8 +31,7 @@ let frpcInstalled = true;
 
 async function checkFrpcInstalled() {
     try {
-        const resp = await fetch('/api/has_frpc');
-        const data = await resp.json();
+        const data = await window.go.main.App.HasFrpc();
         frpcInstalled = data.exists;
         if (!frpcInstalled) {
             updateHomeGuided('点击下载 frpc');
@@ -39,7 +40,6 @@ async function checkFrpcInstalled() {
 }
 
 async function toggleFrpc() {
-    // If frpc.exe is missing, navigate to versions page
     if (!frpcInstalled) {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const verTab = document.querySelector('[data-page="versions"]');
@@ -54,18 +54,13 @@ async function toggleFrpc() {
     const running = btn.classList.contains('running');
 
     if (running) {
-        const resp = await fetch('/api/stop', { method: 'POST' });
-        const data = await resp.json();
+        const data = await window.go.main.App.StopFrpc();
         if (data.ok) updateHomeStatus(false);
         else updateHomeStatus(true);
     } else {
-        const resp = await fetch('/api/start', { method: 'POST' });
-        const data = await resp.json();
-        if (data.ok) {
-            updateHomeStatus(true);
-        } else {
-            updateHomeStatus(false, data.error || '启动失败');
-        }
+        const data = await window.go.main.App.StartFrpc();
+        if (data.ok) updateHomeStatus(true);
+        else updateHomeStatus(false, data.error || '启动失败');
     }
 }
 
@@ -113,17 +108,14 @@ function updateHomeStatus(running, error) {
 
 async function refreshStatus() {
     try {
-        // Check frpc.exe existence first
-        const hResp = await fetch('/api/has_frpc');
-        const hData = await hResp.json();
+        const hData = await window.go.main.App.HasFrpc();
         frpcInstalled = hData.exists;
         if (!frpcInstalled) {
             updateHomeGuided('点击下载 frpc');
             return;
         }
 
-        const resp = await fetch('/api/status');
-        const data = await resp.json();
+        const data = await window.go.main.App.GetStatus();
         const hint = document.getElementById('homeHint');
 
         updateHomeStatus(data.running);
@@ -132,22 +124,19 @@ async function refreshStatus() {
             hint.textContent = '运行中 · ' + data.config.server;
         }
     } catch(e) {
-        // HTTP server not ready yet
+        // App not ready yet
     }
 }
 
 // ── Config Editor ──
 
 let cmEditor = null;
-let editorBackoff = 0;
 
 function initEditor() {
     if (cmEditor) {
-        // Already created — just refresh after layout stabilizes
         requestAnimationFrame(() => { cmEditor.refresh(); });
         return;
     }
-    // Lazy init: create CodeMirror only when user first navigates to config
     const ta = document.getElementById('tomlEditor');
     if (!ta) return;
 
@@ -167,8 +156,7 @@ function initEditor() {
 async function loadConfig() {
     if (!cmEditor) return;
     try {
-        const resp = await fetch('/api/config');
-        const data = await resp.json();
+        const data = await window.go.main.App.GetConfig();
         if (data.content !== undefined) {
             cmEditor.setValue(data.content);
             cmEditor.clearHistory();
@@ -184,7 +172,6 @@ async function saveConfig() {
     const content = cmEditor.getValue();
     const btn = document.querySelector('#page-config .btn-filled');
 
-    // Validate TOML format before saving
     const errors = validateTOML(content);
     if (errors.length > 0) {
         const origHTML = btn.innerHTML;
@@ -195,12 +182,7 @@ async function saveConfig() {
     }
 
     try {
-        const resp = await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        });
-        const data = await resp.json();
+        const data = await window.go.main.App.SaveConfig(content);
         if (data.ok) {
             const origHTML = btn.innerHTML;
             btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" fill="currentColor"/></svg> 已保存';
@@ -227,7 +209,6 @@ function validateTOML(text) {
 
         if (!trimmed || trimmed.startsWith('#')) continue;
 
-        // 1. Check for unbalanced brackets
         for (const ch of trimmed) {
             if (ch === '[') bracketDepth++;
             if (ch === ']') bracketDepth--;
@@ -237,16 +218,13 @@ function validateTOML(text) {
             }
         }
 
-        // 2. Check table headers
         if (trimmed.startsWith('[')) {
-            // Check [[array]] first
             if (trimmed.startsWith('[[')) {
                 if (!trimmed.endsWith(']]')) {
                     errs.push(ln + ':缺少]]');
                     continue;
                 }
             } else {
-                // Check [section]
                 if (!trimmed.endsWith(']')) {
                     errs.push(ln + ':缺少]');
                     continue;
@@ -260,7 +238,6 @@ function validateTOML(text) {
             continue;
         }
 
-        // 3. Check key-value pairs
         if (trimmed.includes('=')) {
             const eqIdx = trimmed.indexOf('=');
             const key = trimmed.substring(0, eqIdx).trim();
@@ -303,8 +280,7 @@ async function loadVersions() {
     const list = document.getElementById('versionList');
     list.innerHTML = '<div class="loading">加载中…</div>';
     try {
-        const resp = await fetch('/api/versions');
-        const data = await resp.json();
+        const data = await window.go.main.App.GetVersions();
         renderVersionList(data);
     } catch(e) {
         list.innerHTML = '<div class="error-text">网络错误，请检查网络连接</div>';
@@ -331,7 +307,6 @@ function renderVersionList(data) {
         const isInstalled = (v.tag === data.current);
 
         if (anyDownloading) {
-            // Any operation in progress - disable all buttons
             if (isInstalled) {
                 actions = '<button class="btn-text-sm btn-active" disabled>使用中</button>';
             } else if (downloadingVersions.has(v.tag)) {
@@ -340,7 +315,6 @@ function renderVersionList(data) {
                 actions = '<button class="btn-text-sm" disabled>获取</button>';
             }
         } else {
-            // No operation in progress - enable buttons
             if (isInstalled) {
                 actions = '<button class="btn-text-sm btn-active" disabled>使用中</button>';
             } else {
@@ -349,8 +323,6 @@ function renderVersionList(data) {
         }
 
         let badges = '';
-
-        // Format date as YYYY-MM-DD
         let dateStr = '';
         if (v.date) {
             const m = v.date.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -376,7 +348,6 @@ function renderVersionList(data) {
 async function downloadVersion(tag, url, btn) {
     downloadingVersions.add(tag);
 
-    // Immediately disable all buttons
     document.querySelectorAll('.version-item .btn-text-sm').forEach(b => {
         b.disabled = true;
         if (b !== btn && !b.classList.contains('btn-active')) {
@@ -387,18 +358,7 @@ async function downloadVersion(tag, url, btn) {
     btn.textContent = '下载中…';
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-        const resp = await fetch('/api/download', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag, url }),
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        const data = await resp.json();
+        const data = await window.go.main.App.DownloadVersion(tag, url);
         if (data.ok) {
             btn.textContent = '完成 ✓';
             checkFrpcInstalled();
@@ -411,11 +371,7 @@ async function downloadVersion(tag, url, btn) {
         }
     } catch(e) {
         downloadingVersions.delete(tag);
-        if (e.name === 'AbortError') {
-            btn.textContent = '下载超时';
-        } else {
-            btn.textContent = '网络错误';
-        }
+        btn.textContent = '网络错误';
         setTimeout(() => loadVersions(), 3000);
     }
 }
@@ -425,7 +381,6 @@ async function downloadVersion(tag, url, btn) {
 function toggleDropdown(id) {
     const dd = document.getElementById(id);
     const wasOpen = dd.classList.contains('open');
-    // Close all dropdowns
     document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
     if (!wasOpen) dd.classList.add('open');
 }
@@ -440,7 +395,6 @@ function selectDropdown(id, value, label, el) {
     if (id === 'dropdownCloseBehavior') saveSetting('close_behavior', value);
 }
 
-// Click outside to close dropdowns
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
@@ -451,8 +405,7 @@ document.addEventListener('click', function(e) {
 
 async function loadSettings() {
     try {
-        const resp = await fetch('/api/settings');
-        const data = await resp.json();
+        const data = await window.go.main.App.GetSettings();
         const val = data.close_behavior || 'exit';
         const dd = document.getElementById('dropdownCloseBehavior');
         dd.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
@@ -471,17 +424,11 @@ async function saveSetting(key, value) {
         const dd = document.getElementById('dropdownCloseBehavior');
         const activeItem = dd.querySelector('.dropdown-item.active');
         const closeBehavior = activeItem ? activeItem.dataset.value : 'exit';
-        const settings = {
+        await window.go.main.App.SaveSettings({
             close_behavior: closeBehavior,
             autostart: document.getElementById('settingAutoStart').checked,
             auto_start_frpc: document.getElementById('settingAutoStartFrpc').checked,
-        };
-        await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings),
         });
-        await fetch('/api/apply_settings', { method: 'POST' });
     } catch(e) {}
 }
 
@@ -513,15 +460,13 @@ function stopLogPoll() {
 
 async function pollLogs() {
     try {
-        const resp = await fetch('/api/logs');
-        const data = await resp.json();
-        if (!data.logs || data.logs.length === logLastCount) return;
+        const data = await window.go.main.App.GetLogs();
+        if (!data || data.length === logLastCount) return;
 
         const terminal = document.getElementById('logTerminal');
         const wasAtBottom = terminal.scrollHeight - terminal.scrollTop - terminal.clientHeight < 30;
 
-        terminal.innerHTML = data.logs.map(l => {
-            // Strip ANSI escape codes
+        terminal.innerHTML = data.map(l => {
             const cleanText = l.text.replace(/\x1b\[[0-9;]*m/g, '');
             let cls = '';
             const t = cleanText.toLowerCase();
@@ -531,7 +476,7 @@ async function pollLogs() {
             return '<div class="log-line"><span class="log-time">' + escHtml(l.time) + '</span><span class="log-text ' + cls + '">' + escHtml(cleanText) + '</span></div>';
         }).join('');
 
-        logLastCount = data.logs.length;
+        logLastCount = data.length;
 
         if (wasAtBottom) {
             terminal.scrollTop = terminal.scrollHeight;
@@ -541,7 +486,7 @@ async function pollLogs() {
 
 async function clearLogs() {
     try {
-        await fetch('/api/logs', { method: 'DELETE' });
+        await window.go.main.App.ClearLogs();
         document.getElementById('logTerminal').innerHTML = '';
         logLastCount = 0;
     } catch(e) {}
