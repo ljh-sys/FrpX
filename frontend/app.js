@@ -53,17 +53,21 @@ async function toggleFrpc() {
     const btn = document.getElementById('btnToggle');
     const running = btn.classList.contains('running');
 
-    // Show FAB loading ring (status chip stays unchanged)
-    btn.classList.add('loading');
-
     if (running) {
+        document.getElementById('homeHint').textContent = '';
         const data = await window.go.main.App.StopFrpc();
-        btn.classList.remove('loading');
         if (data.ok) updateHomeStatus(false);
         else updateHomeStatus(true, data.error || '停止失败');
     } else {
+        try {
+            const cfg = await window.go.main.App.GetConfig();
+            const server = extractValue(cfg.content, 'serverAddr');
+            const port = extractValue(cfg.content, 'serverPort');
+            if (server) {
+                document.getElementById('homeHint').textContent = server + ':' + (port || '7000');
+            }
+        } catch(e) {}
         const data = await window.go.main.App.StartFrpc();
-        btn.classList.remove('loading');
         if (data.ok) updateHomeStatus(true);
         else updateHomeStatus(false, data.error || '启动失败');
     }
@@ -94,14 +98,12 @@ function updateStatusChip(state, text) {
 
 function updateHomeStatus(running, error) {
     const btn = document.getElementById('btnToggle');
-    const hint = document.getElementById('homeHint');
 
     btn.classList.remove('running', 'loading');
-    hint.textContent = '';
 
     if (error) {
         setFabIcon('Play');
-        hint.textContent = error;
+        document.getElementById('homeHint').textContent = error;
         updateStatusChip('error', '启动失败');
         return;
     }
@@ -110,8 +112,10 @@ function updateHomeStatus(running, error) {
         btn.classList.add('running');
         setFabIcon('Stop');
         updateStatusChip('running', '运行中');
+        // hint will be set by refreshStatus when server info is available
     } else {
         setFabIcon('Play');
+        document.getElementById('homeHint').textContent = '点击按钮启动 frpc';
         updateStatusChip('stopped', '已停止');
     }
 }
@@ -447,6 +451,19 @@ function escHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+function extractValue(content, key) {
+    for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith(key) && trimmed.includes('=')) {
+            const parts = trimmed.split('=');
+            if (parts.length >= 2) {
+                return parts[1].trim().replace(/^"(.*)"$/, '$1');
+            }
+        }
+    }
+    return '';
 }
 
 // ── Logs Page ──
