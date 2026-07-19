@@ -17,7 +17,9 @@ export namespace main {
 	    }
 	}
 	export class logEntry {
+	    index: number;
 	    time: string;
+	    level: string;
 	    text: string;
 	
 	    static createFrom(source: any = {}) {
@@ -26,7 +28,9 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.index = source["index"];
 	        this.time = source["time"];
+	        this.level = source["level"];
 	        this.text = source["text"];
 	    }
 	}

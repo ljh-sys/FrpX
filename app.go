@@ -178,6 +178,11 @@ func (a *App) GetLogs() []logEntry {
 	return a.frpc.GetLogs()
 }
 
+// GetLogsSince returns log entries with index > since (incremental polling).
+func (a *App) GetLogsSince(since int64) []logEntry {
+	return a.frpc.GetLogsSince(since)
+}
+
 // ClearLogs clears the log buffer.
 func (a *App) ClearLogs() {
 	a.frpc.ClearLogs()

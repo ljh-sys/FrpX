@@ -18,6 +18,10 @@ export function GetLogs() {
   return window['go']['main']['App']['GetLogs']();
 }
 
+export function GetLogsSince(arg1) {
+  return window['go']['main']['App']['GetLogsSince'](arg1);
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }

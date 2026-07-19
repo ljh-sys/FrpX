@@ -10,6 +10,8 @@ export function GetConfig():Promise<Record<string, any>>;
 
 export function GetLogs():Promise<Array<main.logEntry>>;
 
+export function GetLogsSince(arg1:number):Promise<Array<main.logEntry>>;
+
 export function GetSettings():Promise<main.Settings>;
 
 export function GetStatus():Promise<Record<string, any>>;

@@ -53,56 +53,66 @@ async function toggleFrpc() {
     const btn = document.getElementById('btnToggle');
     const running = btn.classList.contains('running');
 
+    // Show FAB loading ring (status chip stays unchanged)
+    btn.classList.add('loading');
+
     if (running) {
         const data = await window.go.main.App.StopFrpc();
+        btn.classList.remove('loading');
         if (data.ok) updateHomeStatus(false);
-        else updateHomeStatus(true);
+        else updateHomeStatus(true, data.error || '停止失败');
     } else {
         const data = await window.go.main.App.StartFrpc();
+        btn.classList.remove('loading');
         if (data.ok) updateHomeStatus(true);
         else updateHomeStatus(false, data.error || '启动失败');
     }
 }
 
+function setFabIcon(icon) {
+    document.querySelectorAll('.fab-icon').forEach(el => el.classList.remove('active'));
+    const el = document.getElementById('fab' + icon.charAt(0).toUpperCase() + icon.slice(1));
+    if (el) el.classList.add('active');
+}
+
 function updateHomeGuided(hintText) {
     const btn = document.getElementById('btnToggle');
-    const fabPlay = document.getElementById('fabPlay');
-    const fabStop = document.getElementById('fabStop');
-    const fabDownload = document.getElementById('fabDownload');
-    const hint = document.getElementById('homeHint');
+    btn.classList.remove('running', 'loading');
+    setFabIcon('Download');
+    document.getElementById('homeHint').textContent = hintText;
+    updateStatusChip('stopped', '未安装');
+}
 
-    btn.classList.remove('running');
-    fabPlay.style.display = 'none';
-    fabStop.style.display = 'none';
-    fabDownload.style.display = '';
-    hint.textContent = hintText;
+function updateStatusChip(state, text) {
+    const chip = document.getElementById('statusChip');
+    const chipText = document.getElementById('statusChipText');
+    chip.className = 'status-chip';
+    if (state === 'running') chip.classList.add('running');
+    if (state === 'error') chip.classList.add('error');
+    chipText.textContent = text || '';
 }
 
 function updateHomeStatus(running, error) {
     const btn = document.getElementById('btnToggle');
-    const fabPlay = document.getElementById('fabPlay');
-    const fabStop = document.getElementById('fabStop');
     const hint = document.getElementById('homeHint');
-    document.getElementById('fabDownload').style.display = 'none';
+
+    btn.classList.remove('running', 'loading');
+    hint.textContent = '';
 
     if (error) {
-        btn.classList.remove('running');
-        fabPlay.style.display = '';
-        fabStop.style.display = 'none';
+        setFabIcon('Play');
         hint.textContent = error;
+        updateStatusChip('error', '启动失败');
         return;
     }
 
     if (running) {
         btn.classList.add('running');
-        fabPlay.style.display = 'none';
-        fabStop.style.display = '';
-        hint.textContent = '点击按钮停止 frpc';
+        setFabIcon('Stop');
+        updateStatusChip('running', '运行中');
     } else {
-        btn.classList.remove('running');
-        fabPlay.style.display = '';
-        fabStop.style.display = 'none';
-        hint.textContent = '点击按钮启动 frpc';
+        setFabIcon('Play');
+        updateStatusChip('stopped', '已停止');
     }
 }
 
@@ -116,12 +126,11 @@ async function refreshStatus() {
         }
 
         const data = await window.go.main.App.GetStatus();
-        const hint = document.getElementById('homeHint');
 
         updateHomeStatus(data.running);
 
         if (data.running && data.config) {
-            hint.textContent = '运行中 · ' + data.config.server;
+            document.getElementById('homeHint').textContent = data.config.server;
         }
     } catch(e) {
         // App not ready yet
@@ -443,7 +452,7 @@ function escHtml(str) {
 // ── Logs Page ──
 
 let logPollTimer = null;
-let logLastCount = 0;
+let logLastIndex = 0;
 
 function startLogPoll() {
     if (logPollTimer) return;
@@ -458,25 +467,40 @@ function stopLogPoll() {
     }
 }
 
+function getLogClass(level, text) {
+    // Use structured level if available
+    if (level === 'error') return 'log-error';
+    if (level === 'warn') return 'log-warn';
+    if (level === 'info') return 'log-info';
+    if (level === 'debug') return 'log-info';
+    // Fallback: keyword matching for logs without level markers
+    const t = text.toLowerCase();
+    if (t.includes('error') || t.includes('fail')) return 'log-error';
+    if (t.includes('warn')) return 'log-warn';
+    return '';
+}
+
 async function pollLogs() {
     try {
-        const data = await window.go.main.App.GetLogs();
-        if (!data || data.length === logLastCount) return;
+        const data = await window.go.main.App.GetLogsSince(logLastIndex);
+        if (!data || data.length === 0) return;
 
         const terminal = document.getElementById('logTerminal');
         const wasAtBottom = terminal.scrollHeight - terminal.scrollTop - terminal.clientHeight < 30;
 
-        terminal.innerHTML = data.map(l => {
-            const cleanText = l.text.replace(/\x1b\[[0-9;]*m/g, '');
-            let cls = '';
-            const t = cleanText.toLowerCase();
-            if (t.includes('[e]') || t.includes('error') || t.includes('fail')) cls = 'log-error';
-            else if (t.includes('[w]') || t.includes('warn')) cls = 'log-warn';
-            else if (t.includes('[i]') || t.includes('info')) cls = 'log-info';
-            return '<div class="log-line"><span class="log-time">' + escHtml(l.time) + '</span><span class="log-text ' + cls + '">' + escHtml(cleanText) + '</span></div>';
-        }).join('');
+        data.forEach(l => {
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            div.innerHTML = '<span class="log-time">' + escHtml(l.time) + '</span>' +
+                '<span class="log-text ' + getLogClass(l.level, l.text) + '">' + escHtml(l.text) + '</span>';
+            terminal.appendChild(div);
+            logLastIndex = l.index;
+        });
 
-        logLastCount = data.length;
+        // Trim old DOM nodes (keep last 500)
+        while (terminal.children.length > 500) {
+            terminal.removeChild(terminal.firstChild);
+        }
 
         if (wasAtBottom) {
             terminal.scrollTop = terminal.scrollHeight;
@@ -488,7 +512,7 @@ async function clearLogs() {
     try {
         await window.go.main.App.ClearLogs();
         document.getElementById('logTerminal').innerHTML = '';
-        logLastCount = 0;
+        logLastIndex = 0;
     } catch(e) {}
 }
 

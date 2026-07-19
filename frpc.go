@@ -14,23 +14,26 @@ import (
 
 // Frpc manages the frpc.exe child process.
 type Frpc struct {
-	mu      sync.Mutex
-	cmd     *exec.Cmd
-	dataDir string
-	running bool
-	logs    []logEntry
-	logMu   sync.RWMutex
-	logWg   sync.WaitGroup
+	mu       sync.Mutex
+	cmd      *exec.Cmd
+	dataDir  string
+	running  bool
+	logs     []logEntry
+	logMu    sync.RWMutex
+	logWg    sync.WaitGroup
+	logIndex int64 // monotonically increasing
 }
 
 type logEntry struct {
-	Time string `json:"time"`
-	Text string `json:"text"`
+	Index int64  `json:"index"`
+	Time  string `json:"time"`
+	Level string `json:"level"`
+	Text  string `json:"text"`
 }
 
 var (
-	logBufSize  = 500
-	logTimeFmt  = "15:04:05"
+	logBufSize = 500
+	logTimeFmt = "15:04:05"
 )
 
 func NewFrpc(dataDir string) *Frpc {
@@ -140,9 +143,12 @@ func (f *Frpc) addLog(text string) {
 	f.logMu.Lock()
 	defer f.logMu.Unlock()
 
+	f.logIndex++
 	f.logs = append(f.logs, logEntry{
-		Time: time.Now().Format(logTimeFmt),
-		Text: text,
+		Index: f.logIndex,
+		Time:  time.Now().Format(logTimeFmt),
+		Level: detectLevel(text),
+		Text:  text,
 	})
 
 	// Trim old logs
@@ -160,11 +166,48 @@ func (f *Frpc) GetLogs() []logEntry {
 	return result
 }
 
-// ClearLogs clears the log buffer.
+// GetLogsSince returns log entries with index > since.
+func (f *Frpc) GetLogsSince(since int64) []logEntry {
+	f.logMu.RLock()
+	defer f.logMu.RUnlock()
+	var result []logEntry
+	for _, e := range f.logs {
+		if e.Index > since {
+			result = append(result, e)
+		}
+	}
+	return result
+}
+
+// ClearLogs clears the log buffer and resets the index counter.
 func (f *Frpc) ClearLogs() {
 	f.logMu.Lock()
 	defer f.logMu.Unlock()
 	f.logs = nil
+	f.logIndex = 0
+}
+
+// detectLevel extracts log level from frpc log output.
+// frpc uses [I]/[W]/[E]/[D] markers and log-level keywords.
+func detectLevel(text string) string {
+	upper := text
+	if len(upper) > 50 {
+		upper = upper[:50]
+	}
+	upper = strings.ToUpper(upper)
+	if strings.Contains(upper, "[E]") || strings.Contains(upper, "ERROR") || strings.Contains(upper, "FATAL") {
+		return "error"
+	}
+	if strings.Contains(upper, "[W]") || strings.Contains(upper, "WARN") {
+		return "warn"
+	}
+	if strings.Contains(upper, "[I]") || strings.Contains(upper, "INFO") {
+		return "info"
+	}
+	if strings.Contains(upper, "[D]") || strings.Contains(upper, "DEBUG") {
+		return "debug"
+	}
+	return ""
 }
 
 // Stop force-kills all frpc processes and waits for cleanup.
