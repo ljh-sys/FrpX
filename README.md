@@ -17,7 +17,7 @@
 
 这么多表单……还不如直接写 TOML 文件。
 
-于是我把下载、配置、启动、日志全部揉在一起，做成了 FrpX —— 一个简单轻量的 frp 桌面客户端……
+于是我把下载、配置、启动、日志全部揉在一起，做成了 FrpX —— 一个简单轻量的 frp 桌面客户端。
 
 ---
 
@@ -32,26 +32,10 @@
 
 ---
 
-## 📦 安装
-
-### 下载
-
-前往 [Releases](https://gitee.com/liujiahong528/frpx/releases) 下载最新版，解压后双击 `FrpX.exe` 启动。
-
-### 从源码编译
-
-```bash
-git clone https://gitee.com/liujiahong528/frpx.git && cd frpx
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
-wails build -ldflags "-s -w -H windowsgui"
-```
-
----
-
 ## 🚀 快速开始
 
 1. 双击 `FrpX.exe` 启动
-2. 进入「版本」页面，下载最新版 frpc
+2. 进入「版本」页面，下载最新 frpc
 3. 进入「配置」页面，填写 frp 服务器信息
 4. 返回「主页」，点击启动按钮
 
@@ -73,24 +57,13 @@ wails build -ldflags "-s -w -H windowsgui"
 
 ---
 
-## ⚙️ 开发
-
-```bash
-wails dev                    # 开发模式（热重载）
-wails build -ldflags "-s -w -H windowsgui"   # 生产编译
-wails build -platform windows/amd64           # 交叉编译
-```
-
-详见 [CLAUDE.md](CLAUDE.md) 了解项目架构和 Wails 绑定 API。
-
 ## 🐛 常见问题
 
-| 问题               | 解决方案                                  |
-| ---------------- | ------------------------------------- |
-| frpc.exe 被杀毒软件拦截 | 将 `frpc.exe` 添加到 Windows Defender 排除项 |
-| 无法连接 GitHub      | FrpX 自动检测系统代理，或设置 `HTTP_PROXY` 环境变量   |
-| 版本获取失败           | 检查网络连接，确认代理设置正确                       |
-| 编译报错             | 必须用 `wails build`，不能直接用 `go build`    |
+| 问题               | 解决方案                                |
+| ---------------- | ----------------------------------- |
+| frpc.exe 被杀毒软件拦截 | 将 FrpX 所在目录添加到 Windows Defender 排除项 |
+| 版本获取失败           | 检查网络和代理配置                           |
+| 编译报错             | 必须用 `wails build`，不能用 `go build`    |
 
 ---
 
